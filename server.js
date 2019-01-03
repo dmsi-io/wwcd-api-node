@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const package = require('./package');
 const { NotFoundError } = require('./src/node_modules/app/errors');
 const getRoutes = require('./src/node_modules/app/utils/getRoutes');
+const api = require('./src/node_modules/app');
 
 const PORT = process.env.PORT || 8080;
 
@@ -37,6 +38,8 @@ app.get('/v1', (req, res) => {
     },
   });
 });
+
+app.use('/v1', api(require('./service')()));
 
 app.use((req, res, next) => {
   res.status(404).json({
