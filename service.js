@@ -15,5 +15,8 @@ module.exports = () => {
 
   return {
     db,
+    configs: {
+      secretKey: 'SMARTCUSTOMEROBSESSED_17002',
+    }
   };
 };
