@@ -5,8 +5,8 @@ const bodyParser = require('body-parser');
 
 const package = require('./package');
 const { NotFoundError } = require('./src/node_modules/app/errors');
-const getRoutes = require('./src/node_modules/app/utils/getRoutes');
 const api = require('./src/node_modules/app');
+const service = require('./service')();
 
 const PORT = process.env.PORT || 8080;
 
@@ -26,20 +26,14 @@ app.use((req, res, next) => {
   return next();
 });
 
-app.get('/v1', (req, res) => {
-  res.json({
-    data: {
-      type: 'Root',
-      included: {},
-      meta: {},
-      links: Object.assign({}, getRoutes(req.apiBase), {
-        self: `${req.apiBase}/`,
-      }),
-    },
-  });
+service.auth.signInWithEmailAndPassword('api@totallynotae.mail', 'supersecret');
+service.auth.onAuthStateChanged((user) => {
+  if (!user) {
+    service.auth.signInWithEmailAndPassword('api@totallynotae.mail', 'supersecret');
+  }
 });
 
-app.use('/v1', api(require('./service')()));
+app.use('/v1', api(service));
 
 app.use((req, res, next) => {
   res.status(404).json({

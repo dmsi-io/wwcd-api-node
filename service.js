@@ -15,6 +15,7 @@ module.exports = () => {
 
   return {
     db,
+    auth: firebase.auth(),
     configs: {
       secretKey: 'SMARTCUSTOMEROBSESSED_17002',
     }
