@@ -26,13 +26,6 @@ app.use((req, res, next) => {
   return next();
 });
 
-service.auth.signInWithEmailAndPassword('api@totallynotae.mail', 'supersecret');
-service.auth.onAuthStateChanged((user) => {
-  if (!user) {
-    service.auth.signInWithEmailAndPassword('api@totallynotae.mail', 'supersecret');
-  }
-});
-
 app.use('/v1', api(service));
 
 app.use((req, res, next) => {
