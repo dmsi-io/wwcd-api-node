@@ -1,15 +1,16 @@
-const firebase = require('firebase-admin');
+const mysql = require('promise-mysql');
 
-const serviceAccount = require('./key');
+console.log()
 
-module.exports = () => {
-  firebase.initializeApp({
-    credential: firebase.credential.cert(serviceAccount),
-    databaseURL: 'https://wwcd-f0480.firebaseio.com',
+module.exports = async () => {
+  const db = await mysql.createConnection({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    socketPath: process.env.SQL_INSTANCE_CONNECTION_NAME
   });
-
-  const db = firebase.firestore();
-  db.settings({ timestampsInSnapshots: true });
 
   return {
     db,
