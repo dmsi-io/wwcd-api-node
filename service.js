@@ -1,6 +1,4 @@
-const mysql = require('promise-mysql');
-
-console.log()
+const mysql = require("promise-mysql");
 
 module.exports = async () => {
   const db = await mysql.createConnection({
@@ -15,7 +13,7 @@ module.exports = async () => {
   return {
     db,
     configs: {
-      secretKey: 'SMARTCUSTOMEROBSESSED_17002',
+      secretKey: "SMARTCUSTOMEROBSESSED_17002"
     }
   };
 };
