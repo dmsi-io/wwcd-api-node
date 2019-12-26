@@ -1,26 +1,23 @@
-const { get } = require("lodash");
-const jwt = require("jsonwebtoken");
+const { get } = require('lodash');
+const jwt = require('jsonwebtoken');
 
 const {
   PasswordMatchError,
   NoUserError,
   MissingParamsError,
   NotFoundError,
-  UserExpiredError
-} = require("app/errors");
+  UserExpiredError,
+} = require('../errors');
 
-module.exports = service => ({
+module.exports = (service) => ({
   authenticateUser: async (p, q, body) => {
-    const { username, password } = get(body, "data.attributes", {});
+    const { username, password } = get(body, 'data.attributes', {});
 
     if (!username || !password) {
-      throw new MissingParamsError(["username", "password"]);
+      throw new MissingParamsError(['username', 'password']);
     }
 
-    const users = await service.db.query(
-      "SELECT * FROM USERS WHERE username = ?",
-      username
-    );
+    const users = await service.db.query('SELECT * FROM USERS WHERE username = ?', username);
 
     console.log(users);
 
@@ -44,21 +41,21 @@ module.exports = service => ({
         firstName: user.firstName,
         lastName: user.lastName,
         tickets: user.tickets,
-        id: user.id
+        id: user.id,
       },
-      service.configs.secretKey
+      service.configs.secretKey,
     );
 
     return { token, id: user.id };
   },
   authMiddleware: async (req, res, next) => {
-    const authHeader = req.get("Authorization");
+    const authHeader = req.get('Authorization');
 
     if (!authHeader) {
       throw new NotFoundError();
     }
 
-    const [_, token] = authHeader.split(" ");
+    const [_, token] = authHeader.split(' ');
 
     if (!token) {
       throw new NotFoundError();
@@ -76,14 +73,11 @@ module.exports = service => ({
       throw new NotFoundError();
     }
 
-    const user = await service.db.query(
-      "SELECT id FROM USERS WHERE id = ?",
-      req.user.id
-    );
+    const user = await service.db.query('SELECT id FROM USERS WHERE id = ?', req.user.id);
 
     if (user.length === 0) {
       return res.json({
-        errors: [new UserExpiredError()]
+        errors: [new UserExpiredError()],
       });
     }
 
@@ -91,16 +85,13 @@ module.exports = service => ({
   },
 
   authenticateAdmin: async (p, q, body) => {
-    const { username, password } = get(body, "data.attributes", {});
+    const { username, password } = get(body, 'data.attributes', {});
 
     if (!username || !password) {
-      throw new MissingParamsError(["username", "password"]);
+      throw new MissingParamsError(['username', 'password']);
     }
 
-    const users = await service.db.query(
-      "SELECT * FROM ADMINS WHERE username = ?",
-      username
-    );
+    const users = await service.db.query('SELECT * FROM ADMINS WHERE username = ?', username);
 
     if (users.length !== 1) {
       throw new NoUserError(username);
@@ -120,21 +111,21 @@ module.exports = service => ({
       {
         username: user.username,
         id: user.id,
-        admin: true
+        admin: true,
       },
-      service.configs.secretKey
+      service.configs.secretKey,
     );
 
     return { token, id: user.id };
   },
   authAdminMiddleware: async (req, res, next) => {
-    const authHeader = req.get("Authorization");
+    const authHeader = req.get('Authorization');
 
     if (!authHeader) {
       throw new NotFoundError();
     }
 
-    const [_, token] = authHeader.split(" ");
+    const [_, token] = authHeader.split(' ');
 
     if (!token) {
       throw new NotFoundError();
@@ -150,17 +141,14 @@ module.exports = service => ({
       throw new NotFoundError();
     }
 
-    const user = await service.db.query(
-      "SELECT id FROM ADMINS WHERE id = ?",
-      req.user.id
-    );
+    const user = await service.db.query('SELECT id FROM ADMINS WHERE id = ?', req.user.id);
 
     if (user.length === 0) {
       return res.json({
-        errors: [new UserExpiredError()]
+        errors: [new UserExpiredError()],
       });
     }
 
     return next();
-  }
+  },
 });

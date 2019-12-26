@@ -1,14 +1,12 @@
-const catchify = require("catchify");
+const catchify = require('catchify');
 
-module.exports = cb => type => async (req, res) => {
-  const [err, data] = await catchify(
-    cb(req.params, req.query, req.body, req.user, req)
-  );
+module.exports = (cb) => (type) => async (req, res) => {
+  const [err, data] = await catchify(cb(req.params, req.query, req.body, req.user, req));
 
   if (err) {
     res.statusCode = err.status || 500;
     return res.json({
-      errors: [err]
+      errors: [err],
     });
   }
 
@@ -18,19 +16,19 @@ module.exports = cb => type => async (req, res) => {
     }
 
     res.json({
-      data: data.map(d => ({
+      data: data.map((d) => ({
         id: d.id,
         type,
-        attributes: d
-      }))
+        attributes: d,
+      })),
     });
   } else {
     res.json({
       data: {
         type,
         id: data.id,
-        attributes: data
-      }
+        attributes: data,
+      },
     });
   }
 };

@@ -1,27 +1,27 @@
-const uuidv4 = require("uuid/v4");
+const uuidv4 = require('uuid/v4');
 
-const { NotFoundError } = require("app/errors");
+const { NotFoundError } = require('../errors');
 
-const getStorageUrl = require("../utils/getStorageUrl");
+const getStorageUrl = require('../utils/getStorageUrl');
 
-const convertToOuputCase = prize => ({
+const convertToOuputCase = (prize) => ({
   id: prize.id,
   categoryId: prize.category_id,
   title: prize.title,
   description: prize.description,
   image: prize.image_key ? getStorageUrl(prize.image_key) : null,
-  committedTickets: prize.committed_tickets
+  committedTickets: prize.committed_tickets,
 });
 
-module.exports = service => ({
+module.exports = (service) => ({
   getAll: async () => {
     const prizes = await service.db.query(
       `
-      SELECT id, category_id, title, description, image_key, committed_tickets
+      SELECT id, category_id, title, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets
       FROM PRIZES P 
-        JOIN (SELECT prize_id, COUNT(*) AS committed_tickets FROM TICKETS GROUP BY prize_id) T
+        LEFT JOIN (SELECT prize_id, COUNT(*) AS committed_tickets FROM TICKETS GROUP BY prize_id) T
         ON P.id = T.prize_id
-      `
+      `,
     );
 
     return prizes.map(convertToOuputCase);
@@ -29,13 +29,13 @@ module.exports = service => ({
   get: async ({ id }) => {
     const prizes = await service.db.query(
       `
-      SELECT id, category_id, title, description, image_key, committed_tickets
+      SELECT id, category_id, title, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets
       FROM PRIZES P
-        JOIN (SELECT prize_id, COUNT(*) AS committed_tickets FROM TICKETS WHERE prize_id = ? GROUP BY prize_id) T
+        LEFT JOIN (SELECT prize_id, COUNT(*) AS committed_tickets FROM TICKETS WHERE prize_id = ? GROUP BY prize_id) T
         ON P.id = T.prize_id
       WHERE P.id = ?
       `,
-      [id, id]
+      [id, id],
     );
 
     if (prizes.length === 0) {
@@ -59,8 +59,8 @@ module.exports = service => ({
       `,
       new Date(since)
         .toISOString()
-        .replace(/T/, " ") // replace T with a space
-        .replace(/\..+/, "") // delete the dot and everything after
+        .replace(/T/, ' ') // replace T with a space
+        .replace(/\..+/, ''), // delete the dot and everything after
     );
 
     return prizesWithNewTickets.map(convertToOuputCase);
@@ -69,17 +69,12 @@ module.exports = service => ({
     const { categoryId, title, description, removeImage } = body;
 
     if (!categoryId || !title || !description) {
-      throw new MissingParamsError([
-        "categoryId",
-        "title",
-        "description",
-        "removeImage"
-      ]);
+      throw new MissingParamsError(['categoryId', 'title', 'description', 'removeImage']);
     }
 
     let prizes = await service.db.query(
       `SELECT id, category_id, title, description, image_key FROM PRIZES WHERE id = ?`,
-      id
+      id,
     );
 
     if (prizes.length === 0) {
@@ -89,7 +84,7 @@ module.exports = service => ({
     const { file } = req;
     let imageKey = prizes[0].image_key;
 
-    if ((file || removeImage) && imageKey != null && imageKey != "") {
+    if ((file || removeImage) && imageKey != null && imageKey != '') {
       try {
         await service.bucket.file(imageKey).delete();
       } catch (e) {
@@ -104,7 +99,11 @@ module.exports = service => ({
 
       try {
         await service.bucket.file(imageKey).save(file.buffer, {
-          contentType: file.mimetype
+          contentType: file.mimetype,
+          resumable: false,
+          metadata: {
+            cacheControl: 'public, max-age=86400',
+          },
         });
       } catch (e) {
         console.log(`Error uploading photo '${imageKey}'`, e);
@@ -114,12 +113,12 @@ module.exports = service => ({
 
     await service.db.query(
       `UPDATE PRIZES SET image_key = ?, category_id = ?, title = ?, description = ? WHERE id = ?`,
-      [imageKey, categoryId, title, description, id]
+      [imageKey, categoryId, title, description, id],
     );
 
     prizes = await service.db.query(
       `SELECT id, category_id, title, description, image_key FROM PRIZES WHERE id = ?`,
-      id
+      id,
     );
 
     if (prizes.length === 0) {
@@ -132,7 +131,7 @@ module.exports = service => ({
     const { categoryId, title, description } = body;
 
     if (!categoryId || !title || !description) {
-      throw new MissingParamsError(["categoryId", "title", "description"]);
+      throw new MissingParamsError(['categoryId', 'title', 'description']);
     }
 
     const { file } = req;
@@ -143,7 +142,11 @@ module.exports = service => ({
 
       try {
         await service.bucket.file(imageKey).save(file.buffer, {
-          contentType: file.mimetype
+          contentType: file.mimetype,
+          resumable: false,
+          metadata: {
+            cacheControl: 'public, max-age=86400',
+          },
         });
       } catch (e) {
         console.log(`Error uploading photo '${imageKey}'`, e);
@@ -153,12 +156,12 @@ module.exports = service => ({
 
     const results = await service.db.query(
       `INSERT INTO PRIZES(category_id, title, description, image_key) VALUES (?, ?, ?, ?)`,
-      [categoryId, title, description, imageKey]
+      [categoryId, title, description, imageKey],
     );
 
     const prizes = await service.db.query(
       `SELECT id, category_id, title, description, image_key FROM PRIZES WHERE id = ?`,
-      results.insertId
+      results.insertId,
     );
 
     if (prizes.length === 0) {
@@ -168,10 +171,7 @@ module.exports = service => ({
     return convertToOuputCase(prizes[0]);
   },
   delete: async ({ id }) => {
-    const prizes = await service.db.query(
-      `SELECT * FROM PRIZES WHERE id = ?`,
-      id
-    );
+    const prizes = await service.db.query(`SELECT * FROM PRIZES WHERE id = ?`, id);
 
     if (prizes.length === 0) {
       throw new NotFoundError();
@@ -179,7 +179,7 @@ module.exports = service => ({
 
     const imageKey = prizes[0].image_key;
 
-    if (imageKey != null && imageKey != "") {
+    if (imageKey != null && imageKey != '') {
       try {
         await service.bucket.file(imageKey).delete();
       } catch (e) {
@@ -190,5 +190,5 @@ module.exports = service => ({
     await service.db.query(`DELETE FROM PRIZES WHERE id = ?`, id);
 
     return convertToOuputCase(prizes[0]);
-  }
+  },
 });

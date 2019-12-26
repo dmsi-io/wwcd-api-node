@@ -6,8 +6,8 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const package = require('./package');
-const { NotFoundError } = require('./src/node_modules/app/errors');
-const api = require('./src/node_modules/app');
+const { NotFoundError } = require('./src/errors');
+const api = require('./src');
 
 const PORT = process.env.PORT || 8080;
 
@@ -22,7 +22,10 @@ require('./service')().then((service) => {
     res.set('Powered-By', 'SCOTCH');
     res.set('Version', package.version);
     res.set('Server', 'A Raspberry Pi powered by an orange in the break room.');
-    res.set('Recruiting', 'Busy inspecting headers during a Christmas party? You oughta be a web dev.');
+    res.set(
+      'Recruiting',
+      'Busy inspecting headers during a Christmas party? You oughta be a web dev.',
+    );
     req.apiBase = req.protocol + '://' + req.get('host') + '/v1';
 
     return next();
@@ -33,20 +36,16 @@ require('./service')().then((service) => {
   app.use((req, res, next) => {
     res.status(404).json({
       errors: [new NotFoundError()],
-    })
+    });
   });
 
   app.use((err, req, res, next) => {
     console.log(err);
     res.statusCode = err.status || 500;
     res.json({
-      errors: Array.isArray(err) ?
-        [...err] :
-        err,
+      errors: Array.isArray(err) ? [...err] : err,
     });
   });
 
-  server.listen(PORT, () =>
-    console.log(`Winner Winner 🐓🥘 running on port ${PORT}`)
-  );
+  server.listen(PORT, () => console.log(`Winner Winner 🐓🥘 running on port ${PORT}`));
 });
