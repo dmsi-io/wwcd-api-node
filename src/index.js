@@ -9,6 +9,7 @@ const prizesController = require('./controllers/prizes');
 const authenticationController = require('./controllers/authentication');
 const usersController = require('./controllers/users');
 const categoriesController = require('./controllers/categories');
+const ticketController = require('./controllers/tickets');
 
 module.exports = (service) => {
   const router = express.Router();
@@ -17,6 +18,7 @@ module.exports = (service) => {
   const users = usersController(service);
   const auth = authenticationController(service);
   const categories = categoriesController(service);
+  const tickets = ticketController(service);
 
   router.post('/authenticate', jsonApiWrapper(auth.authenticateUser)('token'));
   router.post('/authenticateadmin', jsonApiWrapper(auth.authenticateAdmin)('token'));
@@ -57,6 +59,8 @@ module.exports = (service) => {
   router.put('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.update)('user'));
   router.post('/users', auth.authAdminMiddleware, jsonApiWrapper(users.new)('user'));
   router.delete('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.delete)('user'));
+
+  router.get('/tickets', auth.authAdminMiddleware, jsonApiWrapper(tickets.get)('ticket'));
 
   router.get('/', (req, res) => {
     const routes = uniqBy(router.stack.map((r) => r.route.path));
