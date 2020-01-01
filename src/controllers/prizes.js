@@ -65,7 +65,7 @@ module.exports = (service) => ({
 
     return prizesWithNewTickets.map(convertToOuputCase);
   },
-  update: async ({ id }, q, body, u, req) => {
+  update: async ({ id }, q, body, u, file) => {
     const { categoryId, title, description, removeImage } = body;
 
     if (!categoryId || !title || !description) {
@@ -81,7 +81,6 @@ module.exports = (service) => ({
       throw new NotFoundError();
     }
 
-    const { file } = req;
     let imageKey = prizes[0].image_key;
 
     if ((file || removeImage) && imageKey != null && imageKey != '') {
@@ -127,14 +126,13 @@ module.exports = (service) => ({
 
     return convertToOuputCase(prizes[0]);
   },
-  create: async (p, q, body, u, req) => {
+  create: async (p, q, body, u, file) => {
     const { categoryId, title, description } = body;
 
     if (!categoryId || !title || !description) {
       throw new MissingParamsError(['categoryId', 'title', 'description']);
     }
 
-    const { file } = req;
     let imageKey = null;
 
     if (file) {

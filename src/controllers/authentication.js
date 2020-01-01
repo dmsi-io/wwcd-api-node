@@ -19,8 +19,6 @@ module.exports = (service) => ({
 
     const users = await service.db.query('SELECT * FROM USERS WHERE username = ?', username);
 
-    console.log(users);
-
     if (users.length !== 1) {
       throw new NoUserError(username);
     }
@@ -66,8 +64,6 @@ module.exports = (service) => ({
     } catch (e) {
       throw new NotFoundError();
     }
-
-    console.log(req.user);
 
     if (req.user.admin) {
       throw new NotFoundError();

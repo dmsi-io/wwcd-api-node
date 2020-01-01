@@ -1,7 +1,7 @@
 const catchify = require('catchify');
 
 module.exports = (cb) => (type) => async (req, res) => {
-  const [err, data] = await catchify(cb(req.params, req.query, req.body, req.user, req));
+  const [err, data] = await catchify(cb(req.params, req.query, req.body, req.user, req.file));
 
   if (err) {
     res.statusCode = err.status || 500;
