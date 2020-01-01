@@ -1,6 +1,6 @@
 const uuidv4 = require('uuid/v4');
 
-const { NotFoundError } = require('../errors');
+const { NotFoundError, MissingParamsError } = require('../errors');
 
 const getStorageUrl = require('../utils/getStorageUrl');
 

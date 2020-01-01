@@ -1,8 +1,13 @@
+const { get } = require('lodash');
+
+const { MissingParamsError } = require('../errors');
+
 const convertToOuputCase = (ticket) => ({
   id: ticket.id,
   userId: ticket.user_id,
   prizeId: ticket.prize_id,
   created: ticket.created,
+  used: ticket.used === 1,
 });
 
 module.exports = (service) => ({
@@ -21,5 +26,26 @@ module.exports = (service) => ({
     }
 
     return tickets.map(convertToOuputCase);
+  },
+  markUsed: async (p, q, body) => {
+    const { prizeId, userId } = get(body, 'data.attributes');
+
+    if (!prizeId || !userId) {
+      throw new MissingParamsError(['prizeId', 'userId']);
+    }
+
+    await service.db.query(`UPDATE TICKETS SET used = 1 WHERE prize_id = ? AND user_id = ?`, [
+      prizeId,
+      userId,
+    ]);
+  },
+  clearUsed: async (p, q, body) => {
+    const { prizeId } = get(body, 'data.attributes') || {};
+
+    if (prizeId) {
+      await service.db.query(`UPDATE TICKETS SET used = 0 WHERE prize_id = ?`, prizeId);
+    } else {
+      await service.db.query(`UPDATE TICKETS SET used = 0`);
+    }
   },
 });

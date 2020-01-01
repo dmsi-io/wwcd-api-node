@@ -5,6 +5,7 @@ module.exports = (cb) => (type) => async (req, res) => {
 
   if (err) {
     res.statusCode = err.status || 500;
+    console.log(err);
     return res.json({
       errors: [err],
     });
@@ -23,12 +24,17 @@ module.exports = (cb) => (type) => async (req, res) => {
       })),
     });
   } else {
-    res.json({
-      data: {
-        type,
-        id: data.id,
-        attributes: data,
-      },
-    });
+    if (data) {
+      res.json({
+        data: {
+          type,
+          id: data.id,
+          attributes: data,
+        },
+      });
+    } else {
+      res.statusCode = 200;
+      res.json({});
+    }
   }
 };

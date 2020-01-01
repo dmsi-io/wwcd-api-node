@@ -61,6 +61,16 @@ module.exports = (service) => {
   router.delete('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.delete)('user'));
 
   router.get('/tickets', auth.authAdminMiddleware, jsonApiWrapper(tickets.get)('ticket'));
+  router.post(
+    '/tickets/markused',
+    auth.authAdminMiddleware,
+    jsonApiWrapper(tickets.markUsed)('ticket'),
+  );
+  router.post(
+    '/tickets/clearused',
+    auth.authAdminMiddleware,
+    jsonApiWrapper(tickets.clearUsed)('ticket'),
+  );
 
   router.get('/', (req, res) => {
     const routes = uniqBy(router.stack.map((r) => r.route.path));
