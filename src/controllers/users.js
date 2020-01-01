@@ -14,7 +14,7 @@ const convertToOuputCase = (user) => ({
 });
 
 module.exports = (service) => ({
-  new: async (p, q, body) => {
+  create: async (p, q, body) => {
     const { firstName, lastName, username, password, tickets } = get(body, 'data.attributes');
 
     if (!firstName || !lastName || !username || !password || (!tickets && tickets !== 0)) {

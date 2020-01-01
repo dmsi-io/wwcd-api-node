@@ -127,7 +127,7 @@ module.exports = (service) => ({
 
     return convertToOuputCase(prizes[0]);
   },
-  new: async (p, q, body, u, req) => {
+  create: async (p, q, body, u, req) => {
     const { categoryId, title, description } = body;
 
     if (!categoryId || !title || !description) {

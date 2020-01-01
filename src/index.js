@@ -50,14 +50,14 @@ module.exports = (service) => {
     '/prizes',
     auth.authAdminMiddleware,
     upload.single('image'),
-    jsonApiWrapper(prizes.new)('prize'),
+    jsonApiWrapper(prizes.create)('prize'),
   );
   router.delete('/prizes/:id', auth.authAdminMiddleware, jsonApiWrapper(prizes.delete)('prize'));
 
   router.get('/users', auth.authAdminMiddleware, jsonApiWrapper(users.getAll)('user'));
   router.get('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.get)('user'));
   router.put('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.update)('user'));
-  router.post('/users', auth.authAdminMiddleware, jsonApiWrapper(users.new)('user'));
+  router.post('/users', auth.authAdminMiddleware, jsonApiWrapper(users.create)('user'));
   router.delete('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.delete)('user'));
 
   router.get('/tickets', auth.authAdminMiddleware, jsonApiWrapper(tickets.get)('ticket'));
