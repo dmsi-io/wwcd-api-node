@@ -1,10 +1,11 @@
 const catchify = require('catchify');
 
 module.exports = (cb) => (type) => async (req, res) => {
-  const [err, data] = await catchify(cb(req.params, req.query, req.body, req.user));
+  const [err, data] = await catchify(cb(req.params, req.query, req.body, req.user, req.file));
 
   if (err) {
     res.statusCode = err.status || 500;
+    console.log(err);
     return res.json({
       errors: [err],
     });
@@ -20,15 +21,20 @@ module.exports = (cb) => (type) => async (req, res) => {
         id: d.id,
         type,
         attributes: d,
-      }))
+      })),
     });
   } else {
-    res.json({
-      data: {
-        type,
-        id: data.id,
-        attributes: data,
-      }
-    });
+    if (data) {
+      res.json({
+        data: {
+          type,
+          id: data.id,
+          attributes: data,
+        },
+      });
+    } else {
+      res.statusCode = 200;
+      res.json({});
+    }
   }
 };
