@@ -1,6 +1,6 @@
 const { get } = require('lodash');
 
-const { NoMoreTicketsError, UserIdMismatchError, NotFoundError } = require('../errors');
+const { NoMoreTicketsError, UserIdMismatchError, NotFoundError, MissingParamsError } = require('../errors');
 
 const getStorageUrl = require('../utils/getStorageUrl');
 
@@ -123,7 +123,7 @@ module.exports = (service) => ({
     }));
   },
   commitTicket: async (p, q, body, userData) => {
-    const { prize, user } = get(body, 'data.attributes');
+    const { prize, user, ticketCount } = get(body, 'data.attributes');
 
     if (user !== userData.id) {
       throw new UserIdMismatchError(userData.id, user);
@@ -136,21 +136,20 @@ module.exports = (service) => ({
     }
 
     const tickets = await service.db.query(
-      `SELECT COUNT(*) FROM TICKETS WHERE user_id = ?`,
+      `SELECT COUNT(*) AS count FROM TICKETS WHERE user_id = ?`,
       userData.id,
     );
 
-    if (userData.tickets - tickets[0].length < 1) {
+    if (userData.tickets - tickets[0].count < ticketCount) {
       throw new NoMoreTicketsError();
     }
 
-    const newTicket = await service.db.query(
+    await Promise.all(Array(ticketCount).fill(null).map(() => service.db.query(
       `INSERT INTO TICKETS (user_id, prize_id) VALUES (?, ?)`,
       [user, prize],
-    );
+    )));
 
     return {
-      id: newTicket.insertId,
       user,
       prize,
     };
