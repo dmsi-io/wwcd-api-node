@@ -48,4 +48,28 @@ require('./service')().then((service) => {
   });
 
   server.listen(PORT, () => console.log(`Winner Winner 🐓🥘 running on port ${PORT}`));
+
+  const shutdown = command => () => {
+    console.log(`Got ${command}. Shutting down.`);
+
+    server.close(err => {
+      if (err) {
+        console.log("Error closing server", err);
+        process.exit(1);
+      }
+
+      service.db.end(err => {
+        if (err) {
+          console.log("Error closing database", err);
+          process.exit(1);
+        }
+
+        process.exit();
+      });
+    });
+  };
+
+  process.on("SIGTERM", shutdown("SIGTERM"));
+  process.on("SIGINT", shutdown("SIGINT"));
+  process.on("EXIT", shutdown("EXIT"));
 });
