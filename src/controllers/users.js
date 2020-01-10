@@ -1,6 +1,6 @@
 const { get } = require('lodash');
 
-const { NoMoreTicketsError, UserIdMismatchError, NotFoundError } = require('../errors');
+const { NoMoreTicketsError, UserIdMismatchError, NotFoundError, MissingParamsError } = require('../errors');
 
 const getStorageUrl = require('../utils/getStorageUrl');
 
@@ -136,11 +136,11 @@ module.exports = (service) => ({
     }
 
     const tickets = await service.db.query(
-      `SELECT COUNT(*) FROM TICKETS WHERE user_id = ?`,
+      `SELECT COUNT(*) AS count FROM TICKETS WHERE user_id = ?`,
       userData.id,
     );
 
-    if (userData.tickets - tickets[0].length < ticketCount) {
+    if (userData.tickets - tickets[0].count < ticketCount) {
       throw new NoMoreTicketsError();
     }
 
