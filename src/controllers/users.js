@@ -123,7 +123,7 @@ module.exports = (service) => ({
     }));
   },
   commitTicket: async (p, q, body, userData) => {
-    const { prize, user } = get(body, 'data.attributes');
+    const { prize, user, ticketCount } = get(body, 'data.attributes');
 
     if (user !== userData.id) {
       throw new UserIdMismatchError(userData.id, user);
@@ -144,13 +144,12 @@ module.exports = (service) => ({
       throw new NoMoreTicketsError();
     }
 
-    const newTicket = await service.db.query(
+    await Promise.all(Array(ticketCount).fill(null).map(() => service.db.query(
       `INSERT INTO TICKETS (user_id, prize_id) VALUES (?, ?)`,
       [user, prize],
-    );
+    )));
 
     return {
-      id: newTicket.insertId,
       user,
       prize,
     };
