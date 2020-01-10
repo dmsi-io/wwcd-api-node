@@ -140,7 +140,7 @@ module.exports = (service) => ({
       userData.id,
     );
 
-    if (userData.tickets - tickets[0].length < 1) {
+    if (userData.tickets - tickets[0].length < ticketCount) {
       throw new NoMoreTicketsError();
     }
 
