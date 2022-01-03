@@ -10,7 +10,6 @@ const authenticationController = require('./controllers/authentication');
 const usersController = require('./controllers/users');
 const categoriesController = require('./controllers/categories');
 const ticketController = require('./controllers/tickets');
-const selectionsController = require('./controllers/selections');
 
 module.exports = (service) => {
   const router = express.Router();
@@ -20,7 +19,6 @@ module.exports = (service) => {
   const auth = authenticationController(service);
   const categories = categoriesController(service);
   const tickets = ticketController(service);
-  const selections = selectionsController(service);
 
   router.post('/authenticate', jsonApiWrapper(auth.authenticateUser)('token'));
   router.post('/authenticateadmin', jsonApiWrapper(auth.authenticateAdmin)('token'));
@@ -72,12 +70,6 @@ module.exports = (service) => {
     '/tickets/clearused',
     auth.authAdminMiddleware,
     jsonApiWrapper(tickets.clearUsed)('ticket'),
-  );
-
-  router.get(
-    '/selections',
-    auth.authAdminMiddleware,
-    jsonApiWrapper(selections.getAll)('selection'),
   );
 
   router.get('/', (req, res) => {
