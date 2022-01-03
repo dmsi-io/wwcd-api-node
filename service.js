@@ -20,7 +20,7 @@ module.exports = async () => {
     db,
     bucket,
     configs: {
-      secretKey: "SMARTCUSTOMEROBSESSED_17002"
-    }
+      secretKey: "SMARTCUSTOMEROBSESSED_17002",
+    },
   };
 };

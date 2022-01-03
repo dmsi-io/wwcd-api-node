@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const package = require('./package');
 const { NotFoundError } = require('./src/errors');
 const api = require('./src');
+const init = require('./init');
 
 const PORT = process.env.PORT || 8080;
 
@@ -47,7 +48,14 @@ require('./service')().then((service) => {
     });
   });
 
-  server.listen(PORT, () => console.log(`Winner Winner 🐓🥘 running on port ${PORT}`));
+  server.listen(
+    PORT,
+    () => {
+      console.log(`Winner Winner 🐓🥘 running on port ${PORT}`);
+      console.log(`  Spinning up tables if they aren't already there.`);
+      init(service);
+    },
+  );
 
   const shutdown = command => () => {
     console.log(`Got ${command}. Shutting down.`);
