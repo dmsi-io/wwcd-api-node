@@ -1,5 +1,5 @@
 const express = require('express');
-const { uniqBy } = require('lodash');
+const uniqBy = require('lodash.uniqby');
 const multer = require('multer');
 
 var upload = multer();

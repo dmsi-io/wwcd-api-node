@@ -20,6 +20,7 @@ require('./service')().then((service) => {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-store');
     res.set('Powered-By', 'SCOTCH');
     res.set('Version', package.version);
     res.set('Server', 'A Raspberry Pi powered by an orange in the break room.');
@@ -27,7 +28,7 @@ require('./service')().then((service) => {
       'Recruiting',
       'Busy inspecting headers during a Christmas party? You oughta be a web dev.',
     );
-    req.apiBase = req.protocol + '://' + req.get('host') + '/v1';
+    req.apiBase = `${req.protocol}://${req.get('host')}/v1`;
 
     return next();
   });
@@ -48,27 +49,24 @@ require('./service')().then((service) => {
     });
   });
 
-  server.listen(
-    PORT,
-    () => {
-      console.log(`Winner Winner 🐓🥘 running on port ${PORT}`);
-      console.log(`  Spinning up tables if they aren't already there.`);
-      init(service);
-    },
-  );
+  server.listen(PORT, () => {
+    console.log(`Winner Winner 🐓🥘 running on port ${PORT}`);
+    console.log("  Spinning up tables if they aren't already there.");
+    init(service).then(() => console.log('  tables validated'));
+  });
 
-  const shutdown = command => () => {
+  const shutdown = (command) => () => {
     console.log(`Got ${command}. Shutting down.`);
 
-    server.close(err => {
+    server.close((err) => {
       if (err) {
-        console.log("Error closing server", err);
+        console.log('Error closing server', err);
         process.exit(1);
       }
 
-      service.db.end(err => {
+      service.db.end((err) => {
         if (err) {
-          console.log("Error closing database", err);
+          console.log('Error closing database', err);
           process.exit(1);
         }
 
@@ -77,7 +75,7 @@ require('./service')().then((service) => {
     });
   };
 
-  process.on("SIGTERM", shutdown("SIGTERM"));
-  process.on("SIGINT", shutdown("SIGINT"));
-  process.on("EXIT", shutdown("EXIT"));
+  process.on('SIGTERM', shutdown('SIGTERM'));
+  process.on('SIGINT', shutdown('SIGINT'));
+  process.on('EXIT', shutdown('EXIT'));
 });

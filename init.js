@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS \`wwcd\`.\`PRIZES\` (
     id INT NOT NULL AUTO_INCREMENT,
     category_id INT,
     title VARCHAR(255) NOT NULL,
+    multiplier int default 1 null comment 'Number of this prize to be given away',
     description TEXT,
     image_key VARCHAR(255),
     PRIMARY KEY (id)
@@ -15,6 +16,7 @@ CREATE TABLE IF NOT EXISTS \`wwcd\`.\`USERS\` (
     password VARCHAR(24) NOT NULL,
     tickets INT,
     PRIMARY KEY (id)
+    
 );
 CREATE TABLE IF NOT EXISTS \`wwcd\`.\`ADMINS\` (
     id INT NOT NULL AUTO_INCREMENT,
@@ -36,7 +38,7 @@ CREATE TABLE IF NOT EXISTS \`wwcd\`.\`TICKETS\` (
     user_id INT,
     prize_id INT,
     created DATETIME,
-    user BOOL,
+    used BIT,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES USERS(id),
     FOREIGN KEY (prize_id) REFERENCES PRIZES(id)
@@ -44,9 +46,9 @@ CREATE TABLE IF NOT EXISTS \`wwcd\`.\`TICKETS\` (
 `;
 
 const init = (service) => {
-  return Promise.all(query.split(';').map((q) => service.db.query(q))).then(() => {
-    return service.db.query(ticketsQuery);
-  });
-}
+  return Promise.all(query.split(';').map((q) => service.db.query(q))).then(() =>
+    service.db.query(ticketsQuery),
+  );
+};
 
 module.exports = init;
