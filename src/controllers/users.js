@@ -1,10 +1,15 @@
-const { get } = require('lodash');
+const get = require('lodash.get');
 
-const { NoMoreTicketsError, UserIdMismatchError, NotFoundError, MissingParamsError } = require('../errors');
+const {
+  NoMoreTicketsError,
+  UserIdMismatchError,
+  NotFoundError,
+  MissingParamsError,
+} = require('../errors');
 
 const getStorageUrl = require('../utils/getStorageUrl');
 
-const convertToOuputCase = (user) => ({
+const convertToOutputCase = (user) => ({
   id: user.id,
   firstName: user.firstname,
   lastName: user.lastname,
@@ -34,10 +39,10 @@ module.exports = (service) => ({
       throw new NotFoundError();
     }
 
-    return convertToOuputCase(users[0]);
+    return convertToOutputCase(users[0]);
   },
   getAll: async () => {
-    return service.db.query(`SELECT * FROM USERS`).map(convertToOuputCase);
+    return service.db.query(`SELECT * FROM USERS`).map(convertToOutputCase);
   },
   get: async ({ id }) => {
     const users = await service.db.query(`SELECT * FROM USERS WHERE id = ?`, id);
@@ -46,7 +51,7 @@ module.exports = (service) => ({
       throw new NotFoundError();
     }
 
-    return convertToOuputCase(users[0]);
+    return convertToOutputCase(users[0]);
   },
   update: async ({ id }, q, body) => {
     const { firstName, lastName, username, password, tickets } = get(body, 'data.attributes');
@@ -68,7 +73,7 @@ module.exports = (service) => ({
       throw new NotFoundError();
     }
 
-    return convertToOuputCase(users[0]);
+    return convertToOutputCase(users[0]);
   },
   delete: async ({ id }) => {
     const users = await service.db.query(`SELECT * FROM USERS WHERE id = ?`, id);
@@ -79,7 +84,7 @@ module.exports = (service) => ({
 
     await service.db.query(`DELETE FROM USERS WHERE id = ?`, id);
 
-    return convertToOuputCase(users[0]);
+    return convertToOutputCase(users[0]);
   },
   getMe: async (p, q, b, user) => {
     const userData = await service.db.query(`SELECT * FROM USERS WHERE id = ?`, user.id);
@@ -144,10 +149,13 @@ module.exports = (service) => ({
       throw new NoMoreTicketsError();
     }
 
-    await Promise.all(Array(ticketCount).fill(null).map(() => service.db.query(
-      `INSERT INTO TICKETS (user_id, prize_id) VALUES (?, ?)`,
-      [user, prize],
-    )));
+    await Promise.all(
+      Array(ticketCount)
+        .fill(null)
+        .map(() =>
+          service.db.query(`INSERT INTO TICKETS (user_id, prize_id) VALUES (?, ?)`, [user, prize]),
+        ),
+    );
 
     return {
       user,

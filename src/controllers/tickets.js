@@ -1,8 +1,8 @@
-const { get } = require('lodash');
+const get = require('lodash.get');
 
 const { MissingParamsError } = require('../errors');
 
-const convertToOuputCase = (ticket) => ({
+const convertToOutputCase = (ticket) => ({
   id: ticket.id,
   userId: ticket.user_id,
   prizeId: ticket.prize_id,
@@ -25,7 +25,7 @@ module.exports = (service) => ({
       tickets = await service.db.query(`SELECT * FROM TICKETS`);
     }
 
-    return tickets.map(convertToOuputCase);
+    return tickets.map(convertToOutputCase);
   },
   markUsed: async (p, q, body) => {
     const { prizeId, userId } = get(body, 'data.attributes');

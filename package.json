@@ -2,8 +2,8 @@
   "name": "wwcd-api-node",
   "version": "0.1.0",
   "main": "app.js",
-  "repository": "https://github.com/Renddslow/wwcd-api-node.git",
-  "author": "Matt McElwee <mmcelwee@dmsi.com>",
+  "repository": "https://github.com/dmsi-io/wwcd-api-node.git",
+  "author": "DMSi",
   "license": "MIT",
   "dependencies": {
     "@google-cloud/storage": "^3.5.0",
@@ -12,8 +12,9 @@
     "cors": "^2.8.5",
     "dotenv": "^8.1.0",
     "express": "^4.16.4",
-    "jsonwebtoken": "^8.4.0",
-    "lodash": "^4.17.11",
+    "jsonwebtoken": "^9.0.2",
+    "lodash.get": "^4.4.2",
+    "lodash.uniqby": "^4.7.0",
     "multer": "^1.4.2",
     "p-series": "2.1.0",
     "promise-mysql": "^4.1.0",
@@ -22,11 +23,23 @@
   "scripts": {
     "start": "node ./server.js",
     "gcr:build": "gcloud builds submit --tag gcr.io/wwcd-2019/wwcdapi",
-    "gcr:deploy": "gcloud run deploy wwcdapi --image gcr.io/wwcd-2019/wwcdapi --platform managed --allow-unauthenticated --region=us-central1"
+    "gcr:deploy": "gcloud run deploy wwcdapi --image gcr.io/wwcd-2019/wwcdapi --platform managed --allow-unauthenticated --region=us-central1",
+    "postinstall": "husky install",
+    "prettify": "prettier --write \"./**/*.{js,ts,tsx}\""
   },
   "devDependencies": {
     "@dmsi/prettier-config": "^1.3.0",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
     "prettier": "^1.19.1"
+  },
+  "lint-staged": {
+    "*.{js,css,json,md,ts,tsx}": [
+      "prettier --write"
+    ]
+  },
+  "eslintConfig": {
+    "extends": "@dmsi/eslint-config"
   },
   "prettier": "@dmsi/prettier-config"
 }

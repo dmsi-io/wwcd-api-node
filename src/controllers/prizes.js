@@ -4,10 +4,11 @@ const { NotFoundError, MissingParamsError } = require('../errors');
 
 const getStorageUrl = require('../utils/getStorageUrl');
 
-const convertToOuputCase = (prize) => ({
+const convertToOutputCase = (prize) => ({
   id: prize.id,
   categoryId: prize.category_id,
   title: prize.title,
+  multiplier: prize.multiplier ?? 1,
   description: prize.description,
   image: prize.image_key ? getStorageUrl(prize.image_key) : null,
   committedTickets: prize.committed_tickets,
@@ -17,19 +18,19 @@ module.exports = (service) => ({
   getAll: async () => {
     const prizes = await service.db.query(
       `
-      SELECT id, category_id, title, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets
+      SELECT id, category_id, title, multiplier, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets
       FROM PRIZES P 
         LEFT JOIN (SELECT prize_id, COUNT(*) AS committed_tickets FROM TICKETS GROUP BY prize_id) T
         ON P.id = T.prize_id
       `,
     );
 
-    return prizes.map(convertToOuputCase);
+    return prizes.map(convertToOutputCase);
   },
   get: async ({ id }) => {
     const prizes = await service.db.query(
       `
-      SELECT id, category_id, title, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets
+      SELECT id, category_id, title, multiplier, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets
       FROM PRIZES P
         LEFT JOIN (SELECT prize_id, COUNT(*) AS committed_tickets FROM TICKETS WHERE prize_id = ? GROUP BY prize_id) T
         ON P.id = T.prize_id
@@ -42,12 +43,12 @@ module.exports = (service) => ({
       throw new NotFoundError();
     }
 
-    return convertToOuputCase(prizes[0]);
+    return convertToOutputCase(prizes[0]);
   },
   getDiffs: async (p, { since }) => {
     const prizesWithNewTickets = await service.db.query(
       `
-      SELECT id, category_id, title, description, image_key, committed_tickets
+      SELECT id, category_id, title, multiplier, description, image_key, committed_tickets
       FROM PRIZES P
         INNER JOIN (
           SELECT prize_id, COUNT(*) AS committed_tickets
@@ -63,17 +64,17 @@ module.exports = (service) => ({
         .replace(/\..+/, ''), // delete the dot and everything after
     );
 
-    return prizesWithNewTickets.map(convertToOuputCase);
+    return prizesWithNewTickets.map(convertToOutputCase);
   },
   update: async ({ id }, q, body, u, file) => {
-    const { categoryId, title, description, removeImage } = body;
+    const { categoryId, title, multiplier = 1, description, removeImage } = body;
 
     if (!categoryId || !title || !description) {
       throw new MissingParamsError(['categoryId', 'title', 'description', 'removeImage']);
     }
 
     let prizes = await service.db.query(
-      `SELECT id, category_id, title, description, image_key FROM PRIZES WHERE id = ?`,
+      `SELECT id, category_id, title, multiplier, description, image_key FROM PRIZES WHERE id = ?`,
       id,
     );
 
@@ -111,12 +112,12 @@ module.exports = (service) => ({
     }
 
     await service.db.query(
-      `UPDATE PRIZES SET image_key = ?, category_id = ?, title = ?, description = ? WHERE id = ?`,
-      [imageKey, categoryId, title, description, id],
+      `UPDATE PRIZES SET image_key = ?, category_id = ?, title = ?, multiplier = ?, description = ? WHERE id = ?`,
+      [imageKey, categoryId, title, multiplier, description, id],
     );
 
     prizes = await service.db.query(
-      `SELECT id, category_id, title, description, image_key FROM PRIZES WHERE id = ?`,
+      `SELECT id, category_id, title, multiplier, description, image_key FROM PRIZES WHERE id = ?`,
       id,
     );
 
@@ -124,10 +125,10 @@ module.exports = (service) => ({
       throw new NotFoundError();
     }
 
-    return convertToOuputCase(prizes[0]);
+    return convertToOutputCase(prizes[0]);
   },
   create: async (p, q, body, u, file) => {
-    const { categoryId, title, description } = body;
+    const { categoryId, title, multiplier = 1, description } = body;
 
     if (!categoryId || !title || !description) {
       throw new MissingParamsError(['categoryId', 'title', 'description']);
@@ -153,12 +154,12 @@ module.exports = (service) => ({
     }
 
     const results = await service.db.query(
-      `INSERT INTO PRIZES(category_id, title, description, image_key) VALUES (?, ?, ?, ?)`,
-      [categoryId, title, description, imageKey],
+      `INSERT INTO PRIZES(category_id, title, multiplier, description, image_key) VALUES (?, ?, ?, ?)`,
+      [categoryId, title, multiplier, description, imageKey],
     );
 
     const prizes = await service.db.query(
-      `SELECT id, category_id, title, description, image_key FROM PRIZES WHERE id = ?`,
+      `SELECT id, category_id, title, multiplier, description, image_key FROM PRIZES WHERE id = ?`,
       results.insertId,
     );
 
@@ -166,7 +167,7 @@ module.exports = (service) => ({
       throw new NotFoundError();
     }
 
-    return convertToOuputCase(prizes[0]);
+    return convertToOutputCase(prizes[0]);
   },
   delete: async ({ id }) => {
     const prizes = await service.db.query(`SELECT * FROM PRIZES WHERE id = ?`, id);
@@ -187,6 +188,6 @@ module.exports = (service) => ({
 
     await service.db.query(`DELETE FROM PRIZES WHERE id = ?`, id);
 
-    return convertToOuputCase(prizes[0]);
+    return convertToOutputCase(prizes[0]);
   },
 });
