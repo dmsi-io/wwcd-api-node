@@ -1,4 +1,5 @@
 module.exports = {
+  LockedError: require('./LockedError'),
   MissingParamsError: require('./MissingParamsError'),
   NoMoreTicketsError: require('./NoMoreTicketsError'),
   NotFoundError: require('./NotFoundError'),

@@ -8,7 +8,7 @@ const convertToOutputCase = (prize) => ({
   id: prize.id,
   categoryId: prize.category_id,
   title: prize.title,
-  multiplier: prize.multiplier ?? 1,
+  multiplier: prize.multiplier,
   description: prize.description,
   image: prize.image_key ? getStorageUrl(prize.image_key) : null,
   committedTickets: prize.committed_tickets,
@@ -84,7 +84,7 @@ module.exports = (service) => ({
 
     let imageKey = prizes[0].image_key;
 
-    if ((file || removeImage) && imageKey != null && imageKey != '') {
+    if ((file || removeImage) && !!imageKey) {
       try {
         await service.bucket.file(imageKey).delete();
       } catch (e) {
@@ -154,7 +154,7 @@ module.exports = (service) => ({
     }
 
     const results = await service.db.query(
-      `INSERT INTO PRIZES(category_id, title, multiplier, description, image_key) VALUES (?, ?, ?, ?)`,
+      `INSERT INTO PRIZES(category_id, title, multiplier, description, image_key) VALUES (?, ?, ?, ?, ?)`,
       [categoryId, title, multiplier, description, imageKey],
     );
 
@@ -178,7 +178,7 @@ module.exports = (service) => ({
 
     const imageKey = prizes[0].image_key;
 
-    if (imageKey != null && imageKey != '') {
+    if (imageKey != null && !!imageKey) {
       try {
         await service.bucket.file(imageKey).delete();
       } catch (e) {
