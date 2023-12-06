@@ -15,7 +15,7 @@ module.exports = (service) => ({
     let tickets;
     if (since) {
       tickets = await service.db.query(
-        `SELECT * FROM TICKETS WHERE created > ?`,
+        `SELECT id, user_id, prize_id, created, used FROM TICKETS WHERE created > ?`,
         new Date(since)
           .toISOString()
           .replace(/T/, ' ') // replace T with a space
@@ -26,6 +26,11 @@ module.exports = (service) => ({
     }
 
     return tickets.map(convertToOutputCase);
+  },
+  getLocked: async () => {
+    return (
+      (await service.db.query(`SELECT COUNT(*) AS count FROM TICKETS WHERE used = 1`)).count > 0
+    );
   },
   markUsed: async (p, q, body) => {
     const { prizeId, userId } = get(body, 'data.attributes');

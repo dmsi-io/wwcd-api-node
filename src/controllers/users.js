@@ -1,10 +1,11 @@
 const get = require('lodash.get');
 
 const {
-  NoMoreTicketsError,
-  UserIdMismatchError,
-  NotFoundError,
+  LockedError,
   MissingParamsError,
+  NoMoreTicketsError,
+  NotFoundError,
+  UserIdMismatchError,
 } = require('../errors');
 
 const getStorageUrl = require('../utils/getStorageUrl');
@@ -87,7 +88,10 @@ module.exports = (service) => ({
     return convertToOutputCase(users[0]);
   },
   getMe: async (p, q, b, user) => {
-    const userData = await service.db.query(`SELECT * FROM USERS WHERE id = ?`, user.id);
+    const userData = await service.db.query(
+      `SELECT id, firstname, lastname, username, password, tickets FROM USERS WHERE id = ?`,
+      user.id,
+    );
 
     const tickets = await service.db.query(
       `SELECT COUNT(*) AS tickets FROM TICKETS WHERE user_id = ?`,
@@ -130,6 +134,13 @@ module.exports = (service) => ({
   commitTicket: async (p, q, body, userData) => {
     const { prize, user, ticketCount } = get(body, 'data.attributes');
 
+    const locked =
+      (await service.db.query(`SELECT COUNT(*) AS count FROM TICKETS WHERE used = 1`))[0].count > 0;
+
+    if (locked) {
+      throw new LockedError();
+    }
+
     if (user !== userData.id) {
       throw new UserIdMismatchError(userData.id, user);
     }
@@ -156,6 +167,33 @@ module.exports = (service) => ({
           service.db.query(`INSERT INTO TICKETS (user_id, prize_id) VALUES (?, ?)`, [user, prize]),
         ),
     );
+
+    return {
+      user,
+      prize,
+    };
+  },
+  uncommitTicket: async (p, q, body, userData) => {
+    const { prize, user } = get(body, 'data.attributes');
+
+    const locked =
+      (await service.db.query(`SELECT COUNT(*) AS count FROM TICKETS WHERE used = 1`))[0].count > 0;
+
+    if (locked) {
+      throw new LockedError();
+    }
+
+    if (user !== userData.id) {
+      throw new UserIdMismatchError(userData.id, user);
+    }
+
+    const existingPrize = await service.db.query(`SELECT id FROM PRIZES WHERE id = ?`, prize);
+
+    if (existingPrize.length === 0) {
+      throw new NotFoundError();
+    }
+
+    await service.db.query(`DELETE FROM TICKETS WHERE user_id=? AND prize_id=?`, [user, prize]);
 
     return {
       user,

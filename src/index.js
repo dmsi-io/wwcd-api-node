@@ -34,6 +34,11 @@ module.exports = (service) => {
     auth.authMiddleware,
     jsonApiWrapper(users.commitTicket)('ticket'),
   );
+  router.post(
+    '/users/me/removetickets',
+    auth.authMiddleware,
+    jsonApiWrapper(users.uncommitTicket)('ticket'),
+  );
   router.get(
     '/users/me/prizes',
     auth.authMiddleware,
@@ -61,6 +66,11 @@ module.exports = (service) => {
   router.delete('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.delete)('user'));
 
   router.get('/tickets', auth.authAdminMiddleware, jsonApiWrapper(tickets.get)('ticket'));
+  router.get(
+    '/tickets/locked',
+    auth.authAdminMiddleware,
+    jsonApiWrapper(tickets.getLocked)('ticket'),
+  );
   router.post(
     '/tickets/markused',
     auth.authAdminMiddleware,
