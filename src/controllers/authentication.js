@@ -17,13 +17,16 @@ module.exports = (service) => ({
       throw new MissingParamsError(['username', 'password']);
     }
 
-    const users = await service.db.query('SELECT * FROM USERS WHERE username = ?', username);
+    const users = await service.db.query(
+      'SELECT id, firstname, lastname, password, tickets FROM USERS WHERE username = ?',
+      username,
+    );
 
     if (users.length !== 1) {
       throw new NoUserError(username);
     }
 
-    let user = users[0];
+    const [user] = users;
 
     if (!Object.keys(user).length) {
       throw new NoUserError(username);
@@ -35,7 +38,7 @@ module.exports = (service) => ({
 
     const token = jwt.sign(
       {
-        username: user.username,
+        username,
         firstName: user.firstName,
         lastName: user.lastName,
         tickets: user.tickets,
@@ -87,13 +90,16 @@ module.exports = (service) => ({
       throw new MissingParamsError(['username', 'password']);
     }
 
-    const users = await service.db.query('SELECT * FROM ADMINS WHERE username = ?', username);
+    const users = await service.db.query(
+      'SELECT id, password FROM ADMINS WHERE username = ?',
+      username,
+    );
 
     if (users.length !== 1) {
       throw new NoUserError(username);
     }
 
-    let user = users[0];
+    const [user] = users;
 
     if (!Object.keys(user).length) {
       throw new NoUserError(username);
@@ -105,7 +111,7 @@ module.exports = (service) => ({
 
     const token = jwt.sign(
       {
-        username: user.username,
+        username,
         id: user.id,
         admin: true,
       },

@@ -22,7 +22,7 @@ module.exports = (service) => ({
           .replace(/\..+/, ''), // delete the dot and everything after
       );
     } else {
-      tickets = await service.db.query(`SELECT * FROM TICKETS`);
+      tickets = await service.db.query(`SELECT id, user_id, prize_id, created, used FROM TICKETS`);
     }
 
     return tickets.map(convertToOutputCase);

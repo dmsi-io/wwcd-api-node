@@ -34,7 +34,10 @@ module.exports = (service) => ({
       [firstName, lastName, username, password, tickets],
     );
 
-    const users = await service.db.query(`SELECT * FROM USERS WHERE id = ?`, queryResult.insertId);
+    const users = await service.db.query(
+      `SELECT id, firstname, lastname, username, password, tickets FROM USERS WHERE id = ?`,
+      queryResult.insertId,
+    );
 
     if (users.length === 0) {
       throw new NotFoundError();
@@ -43,10 +46,15 @@ module.exports = (service) => ({
     return convertToOutputCase(users[0]);
   },
   getAll: async () => {
-    return service.db.query(`SELECT * FROM USERS`).map(convertToOutputCase);
+    return service.db
+      .query(`SELECT id, firstname, lastname, username, password, tickets FROM USERS`)
+      .map(convertToOutputCase);
   },
   get: async ({ id }) => {
-    const users = await service.db.query(`SELECT * FROM USERS WHERE id = ?`, id);
+    const users = await service.db.query(
+      `SELECT id, firstname, lastname, username, password, tickets FROM USERS WHERE id = ?`,
+      id,
+    );
 
     if (users.length === 0) {
       throw new NotFoundError();
@@ -68,7 +76,10 @@ module.exports = (service) => ({
       [firstName, lastName, username, password, tickets, id],
     );
 
-    const users = await service.db.query(`SELECT * FROM USERS WHERE id = ?`, id);
+    const users = await service.db.query(
+      `SELECT id, firstname, lastname, username, password, tickets FROM USERS WHERE id = ?`,
+      id,
+    );
 
     if (users.length === 0) {
       throw new NotFoundError();
@@ -77,7 +88,10 @@ module.exports = (service) => ({
     return convertToOutputCase(users[0]);
   },
   delete: async ({ id }) => {
-    const users = await service.db.query(`SELECT * FROM USERS WHERE id = ?`, id);
+    const users = await service.db.query(
+      `SELECT id, firstname, lastname, username, password, tickets FROM USERS WHERE id = ?`,
+      id,
+    );
 
     if (users.length === 0) {
       throw new NotFoundError();
