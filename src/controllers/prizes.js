@@ -12,15 +12,16 @@ const convertToOutputCase = (prize) => ({
   description: prize.description,
   image: prize.image_key ? getStorageUrl(prize.image_key) : null,
   committedTickets: prize.committed_tickets,
+  committedUsers: prize.committed_users,
 });
 
 module.exports = (service) => ({
   getAll: async () => {
     const prizes = await service.db.query(
       `
-      SELECT id, category_id, title, multiplier, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets
+      SELECT id, category_id, title, multiplier, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets, IFNULL(committed_users, 0) as committed_users
       FROM PRIZES P 
-        LEFT JOIN (SELECT prize_id, COUNT(*) AS committed_tickets FROM TICKETS GROUP BY prize_id) T
+        LEFT JOIN (SELECT prize_id, COUNT(*) AS committed_tickets, COUNT(DISTINCT user_id) as committed_users FROM TICKETS GROUP BY prize_id) T
         ON P.id = T.prize_id
       `,
     );
@@ -30,9 +31,9 @@ module.exports = (service) => ({
   get: async ({ id }) => {
     const prizes = await service.db.query(
       `
-      SELECT id, category_id, title, multiplier, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets
+      SELECT id, category_id, title, multiplier, description, image_key, IFNULL(committed_tickets, 0) as committed_tickets, IFNULL(committed_users, 0) as committed_users
       FROM PRIZES P
-        LEFT JOIN (SELECT prize_id, COUNT(*) AS committed_tickets FROM TICKETS WHERE prize_id = ? GROUP BY prize_id) T
+        LEFT JOIN (SELECT prize_id, COUNT(*) AS committed_tickets, COUNT(DISTINCT user_id) as committed_users FROM TICKETS WHERE prize_id = ? GROUP BY prize_id) T
         ON P.id = T.prize_id
       WHERE P.id = ?
       `,
@@ -170,7 +171,7 @@ module.exports = (service) => ({
     return convertToOutputCase(prizes[0]);
   },
   delete: async ({ id }) => {
-    const prizes = await service.db.query(`SELECT * FROM PRIZES WHERE id = ?`, id);
+    const prizes = await service.db.query(`SELECT id FROM PRIZES WHERE id = ?`, id);
 
     if (prizes.length === 0) {
       throw new NotFoundError();

@@ -124,10 +124,10 @@ module.exports = (service) => ({
   getPrizes: async (p, q, b, user) => {
     const userPrizes = await service.db.query(
       `
-      SELECT id, category_id, title, description, image_key, committed_tickets
+      SELECT id, category_id, title, description, image_key, committed_tickets, committed_users
       FROM PRIZES P
         INNER JOIN (
-          SELECT prize_id, COUNT(*) AS committed_tickets
+          SELECT prize_id, COUNT(*) AS committed_tickets, COUNT(DISTINCT user_id) as committed_users
           FROM TICKETS
           WHERE user_id = ?
           GROUP BY prize_id
@@ -143,6 +143,7 @@ module.exports = (service) => ({
       description: userPrize.description,
       image: userPrize.image_key ? getStorageUrl(userPrize.image_key) : null,
       committedTickets: userPrize.committed_tickets,
+      committedUsers: userPrize.committed_users,
     }));
   },
   commitTicket: async (p, q, body, userData) => {
