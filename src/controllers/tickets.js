@@ -29,7 +29,7 @@ module.exports = (service) => ({
   },
   getLocked: async () => {
     return (
-      (await service.db.query('SELECT COUNT(*) AS count FROM TICKETS WHERE used = 1'))[0].count > 0
+      (await service.db.query('SELECT COUNT(0) AS count FROM TICKETS WHERE used = 1'))[0].count > 0
     );
   },
   markUsed: async (p, q, body) => {

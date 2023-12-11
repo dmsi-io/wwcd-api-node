@@ -108,7 +108,7 @@ module.exports = (service) => ({
     );
 
     const tickets = await service.db.query(
-      `SELECT COUNT(*) AS tickets FROM TICKETS WHERE user_id = ?`,
+      `SELECT COUNT(0) AS tickets FROM TICKETS WHERE user_id = ?`,
       user.id,
     );
 
@@ -127,7 +127,7 @@ module.exports = (service) => ({
       SELECT id, category_id, title, description, image_key, committed_tickets, committed_users
       FROM PRIZES P
         INNER JOIN (
-          SELECT prize_id, COUNT(*) AS committed_tickets, COUNT(DISTINCT user_id) as committed_users
+          SELECT prize_id, COUNT(0) AS committed_tickets, COUNT(DISTINCT user_id) as committed_users
           FROM TICKETS
           WHERE user_id = ?
           GROUP BY prize_id
@@ -150,7 +150,7 @@ module.exports = (service) => ({
     const { prize, user, ticketCount } = get(body, 'data.attributes');
 
     const locked =
-      (await service.db.query(`SELECT COUNT(*) AS count FROM TICKETS WHERE used = 1`))[0].count > 0;
+      (await service.db.query(`SELECT COUNT(0) AS count FROM TICKETS WHERE used = 1`))[0].count > 0;
 
     if (locked) {
       throw new LockedError();
@@ -167,7 +167,7 @@ module.exports = (service) => ({
     }
 
     const tickets = await service.db.query(
-      `SELECT COUNT(*) AS count FROM TICKETS WHERE user_id = ?`,
+      `SELECT COUNT(0) AS count FROM TICKETS WHERE user_id = ?`,
       userData.id,
     );
 
@@ -192,7 +192,7 @@ module.exports = (service) => ({
     const { prize, user } = get(body, 'data.attributes');
 
     const locked =
-      (await service.db.query(`SELECT COUNT(*) AS count FROM TICKETS WHERE used = 1`))[0].count > 0;
+      (await service.db.query(`SELECT COUNT(0) AS count FROM TICKETS WHERE used = 1`))[0].count > 0;
 
     if (locked) {
       throw new LockedError();
