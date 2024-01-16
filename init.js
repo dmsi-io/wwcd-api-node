@@ -45,10 +45,28 @@ CREATE TABLE IF NOT EXISTS \`wwcd\`.\`TICKETS\` (
 );
 `;
 
+const deleteTrigger = `
+CREATE TRIGGER prize_delete
+    BEFORE DELETE
+    ON \`wwcd\`.\`PRIZES\`
+    FOR EACH ROW
+BEGIN
+    DELETE FROM \`wwcd\`.\`TICKETS\` WHERE \`wwcd\`.\`TICKETS\`.prize_id = OLD.id;
+END;
+
+CREATE TRIGGER user_delete
+    BEFORE DELETE
+    ON USERS
+    FOR EACH ROW
+BEGIN
+    DELETE FROM TICKETS WHERE TICKETS.user_id = OLD.id;
+END;
+`;
+
 const init = (service) => {
-  return Promise.all(query.split(';').map((q) => service.db.query(q))).then(() =>
-    service.db.query(ticketsQuery),
-  );
+  return Promise.all(query.split(';').map((q) => service.db.query(q)))
+    .then(() => service.db.query(ticketsQuery))
+    .then(() => Promise.all(deleteTrigger.split(';').map((q) => service.db.query(q))));
 };
 
 module.exports = init;
