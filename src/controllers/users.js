@@ -24,7 +24,7 @@ const convertToOutputCase = (user) => ({
 
 module.exports = (service) => ({
   create: async (p, q, body, file) => {
-    const { firstName, lastName, username, password, tickets } = get(body, 'data.attributes');
+    const { firstName, lastName, username, password, tickets, image = '' } = get(body, 'data.attributes');
 
     if (!firstName || !lastName || !username || !password || (!tickets && tickets !== 0)) {
       throw new MissingParamsError(['firstName', 'lastName', 'username', 'password', 'tickets']);
@@ -53,7 +53,7 @@ module.exports = (service) => ({
       `
       INSERT INTO USERS (firstname, lastname, username, password, tickets, image_key) VALUES (?, ?, ?, ?, ?)
     `,
-      [firstName, lastName, username, password, tickets],
+      [firstName, lastName, username, password, tickets, imageKey],
     );
 
     const users = await service.db.query(
@@ -91,14 +91,7 @@ module.exports = (service) => ({
       throw new MissingParamsError(['firstName', 'lastName', 'username', 'password', 'tickets', 'removeImage']);
     }
 
-    await service.db.query(
-      `
-      UPDATE USERS SET firstname = ?, lastname = ?, username = ?, password = ?, tickets = ?, image_key = ? WHERE id = ?
-      `,
-      [firstName, lastName, username, password, tickets, image_key, id,],
-    );
-
-    const users = await service.db.query(
+    let users = await service.db.query(
       `SELECT id, firstname, lastname, username, password, tickets, image_key FROM USERS WHERE id = ?`,
       id,
     );
@@ -135,6 +128,20 @@ module.exports = (service) => ({
         console.log(`Error uploading photo '${imageKey}'`, e);
         imageKey = null;
       }
+    }
+
+    await service.db.query(
+      `UPDATE USERS SET firstname = ?, lastname = ?, username = ?, password = ?, tickets = ?, image_key = ? WHERE id = ?`,
+      [firstName, lastName, username, password, tickets, image_key, id,],
+    );
+
+    users = await service.db.query(
+      `SELECT id, firstname, lastname, username, password, tickets, image_key FROM USERS WHERE id = ?`,
+      id,
+    );
+
+    if (users.length === 0) {
+      throw new NotFoundError();
     }
 
     return convertToOutputCase(users[0]);
