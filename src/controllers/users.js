@@ -1,5 +1,7 @@
 const get = require('lodash.get');
 
+const uuidv4 = require('uuid/v4');
+
 const {
   LockedError,
   MissingParamsError,
@@ -12,30 +14,50 @@ const getStorageUrl = require('../utils/getStorageUrl');
 
 const convertToOutputCase = (user) => ({
   id: user.id,
-  firstName: user.firstname,
-  lastName: user.lastname,
+  firstName: user.firstName,
+  lastName: user.lastName,
   username: user.username,
   password: user.password,
+  image: user.image_key ? getStorageUrl(user.image_key) : null,
   tickets: user.tickets,
 });
 
 module.exports = (service) => ({
-  create: async (p, q, body) => {
+  create: async (p, q, body, file) => {
     const { firstName, lastName, username, password, tickets } = get(body, 'data.attributes');
 
     if (!firstName || !lastName || !username || !password || (!tickets && tickets !== 0)) {
       throw new MissingParamsError(['firstName', 'lastName', 'username', 'password', 'tickets']);
     }
 
+    let imageKey = null;
+
+    if (file) {
+      imageKey = `emp_photos/${uuidv4()}`;
+
+      try {
+        await service.bucket.file(imageKey).save(file.buffer, {
+          contentType: file.mimetype,
+          resumable: false,
+          metadata: {
+            cacheControl: 'public, max-age=86400',
+          },
+        });
+      } catch (e) {
+        console.log(`Error uploading photo '${imageKey}'`, e);
+        imageKey = null;
+      }
+    }
+
     const queryResult = await service.db.query(
       `
-      INSERT INTO USERS (firstname, lastname, username, password, tickets) VALUES (?, ?, ?, ?, ?)
+      INSERT INTO USERS (firstname, lastname, username, password, tickets, image_key) VALUES (?, ?, ?, ?, ?)
     `,
       [firstName, lastName, username, password, tickets],
     );
 
     const users = await service.db.query(
-      `SELECT id, firstname, lastname, username, password, tickets FROM USERS WHERE id = ?`,
+      `SELECT id, firstname, lastname, username, password, tickets, image_key FROM USERS WHERE id = ?`,
       queryResult.insertId,
     );
 
@@ -47,12 +69,12 @@ module.exports = (service) => ({
   },
   getAll: async () => {
     return service.db
-      .query(`SELECT id, firstname, lastname, username, password, tickets FROM USERS`)
+      .query(`SELECT id, firstname, lastname, username, password, tickets, image_key FROM USERS`)
       .map(convertToOutputCase);
   },
   get: async ({ id }) => {
     const users = await service.db.query(
-      `SELECT id, firstname, lastname, username, password, tickets FROM USERS WHERE id = ?`,
+      `SELECT id, firstname, lastname, username, password, tickets, image_key FROM USERS WHERE id = ?`,
       id,
     );
 
@@ -62,39 +84,79 @@ module.exports = (service) => ({
 
     return convertToOutputCase(users[0]);
   },
-  update: async ({ id }, q, body) => {
-    const { firstName, lastName, username, password, tickets } = get(body, 'data.attributes');
+  update: async ({ id }, q, body, file) => {
+    const { firstName, lastName, username, password, tickets, removeImage } = get(body, 'data.attributes');
 
     if (!firstName || !lastName || !username || !password || (!tickets && tickets !== 0)) {
-      throw new MissingParamsError(['firstName', 'lastName', 'username', 'password', 'tickets']);
+      throw new MissingParamsError(['firstName', 'lastName', 'username', 'password', 'tickets', 'removeImage']);
     }
 
     await service.db.query(
       `
-      UPDATE USERS SET firstname = ?, lastname = ?, username = ?, password = ?, tickets = ? WHERE id = ?
+      UPDATE USERS SET firstname = ?, lastname = ?, username = ?, password = ?, tickets = ?, image_key = ? WHERE id = ?
       `,
-      [firstName, lastName, username, password, tickets, id],
+      [firstName, lastName, username, password, tickets, image_key, id,],
     );
 
     const users = await service.db.query(
-      `SELECT id, firstname, lastname, username, password, tickets FROM USERS WHERE id = ?`,
+      `SELECT id, firstname, lastname, username, password, tickets, image_key FROM USERS WHERE id = ?`,
       id,
     );
 
+
     if (users.length === 0) {
       throw new NotFoundError();
+    }
+
+        let imageKey = users[0].image_key;
+
+    if ((file || removeImage) && !!imageKey) {
+      try {
+        await service.bucket.file(imageKey).delete();
+      } catch (e) {
+        console.log(`Error deleting photo '${imageKey}'`, e);
+      }
+
+      imageKey = null;
+    }
+
+    if (file) {
+      imageKey = `emp_photos/${uuidv4()}`;
+
+      try {
+        await service.bucket.file(imageKey).save(file.buffer, {
+          contentType: file.mimetype,
+          resumable: false,
+          metadata: {
+            cacheControl: 'public, max-age=86400',
+          },
+        });
+      } catch (e) {
+        console.log(`Error uploading photo '${imageKey}'`, e);
+        imageKey = null;
+      }
     }
 
     return convertToOutputCase(users[0]);
   },
   delete: async ({ id }) => {
     const users = await service.db.query(
-      `SELECT id, firstname, lastname, username, password, tickets FROM USERS WHERE id = ?`,
+      `SELECT id, firstname, lastname, username, password, tickets, image_key FROM USERS WHERE id = ?`,
       id,
     );
 
     if (users.length === 0) {
       throw new NotFoundError();
+    }
+
+    const imageKey = prizes[0].image_key;
+
+    if (imageKey != null && !!imageKey) {
+      try {
+        await service.bucket.file(imageKey).delete();
+      } catch (e) {
+        console.log(`Error deleting photo '${imageKey}'`, e);
+      }
     }
 
     await service.db.query(`DELETE FROM USERS WHERE id = ?`, id);
