@@ -61,8 +61,18 @@ module.exports = (service) => {
 
   router.get('/users', auth.authAdminMiddleware, jsonApiWrapper(users.getAll)('user'));
   router.get('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.get)('user'));
-  router.put('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.update)('user'));
-  router.post('/users', auth.authAdminMiddleware, jsonApiWrapper(users.create)('user'));
+  router.put(
+    '/users/:id',
+    auth.authAdminMiddleware,
+    upload.single('image'),
+    jsonApiWrapper(users.update)('user'),
+  );
+  router.post(
+    '/users',
+    auth.authAdminMiddleware,
+    upload.single('image'),
+    jsonApiWrapper(users.create)('user'),
+  );
   router.delete('/users/:id', auth.authAdminMiddleware, jsonApiWrapper(users.delete)('user'));
 
   router.get('/tickets', auth.authAdminMiddleware, jsonApiWrapper(tickets.get)('ticket'));
