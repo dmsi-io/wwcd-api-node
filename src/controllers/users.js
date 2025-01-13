@@ -14,8 +14,8 @@ const getStorageUrl = require('../utils/getStorageUrl');
 
 const convertToOutputCase = (user) => ({
   id: user.id,
-  firstName: user.firstName,
-  lastName: user.lastName,
+  firstName: user.firstname,
+  lastName: user.lastname,
   username: user.username,
   password: user.password,
   image: user.image_key ? getStorageUrl(user.image_key) : null,
@@ -23,8 +23,8 @@ const convertToOutputCase = (user) => ({
 });
 
 module.exports = (service) => ({
-  create: async (p, q, body, file) => {
-    const { firstName, lastName, username, password, tickets, image = '' } = get(body, 'data.attributes');
+  create: async (p, q, body, u, file) => {
+    const { firstName, lastName, username, password, tickets } = body;
 
     if (!firstName || !lastName || !username || !password || (!tickets && tickets !== 0)) {
       throw new MissingParamsError(['firstName', 'lastName', 'username', 'password', 'tickets']);
@@ -50,9 +50,7 @@ module.exports = (service) => ({
     }
 
     const queryResult = await service.db.query(
-      `
-      INSERT INTO USERS (firstname, lastname, username, password, tickets, image_key) VALUES (?, ?, ?, ?, ?)
-    `,
+      `INSERT INTO USERS (firstname, lastname, username, password, tickets, image_key) VALUES (?, ?, ?, ?, ?, ?)`,
       [firstName, lastName, username, password, tickets, imageKey],
     );
 
@@ -84,11 +82,18 @@ module.exports = (service) => ({
 
     return convertToOutputCase(users[0]);
   },
-  update: async ({ id }, q, body, file) => {
-    const { firstName, lastName, username, password, tickets, removeImage } = get(body, 'data.attributes');
+  update: async ({ id }, q, body, u, file) => {
+    const { firstName, lastName, username, password, tickets, removeImage } = body;
 
     if (!firstName || !lastName || !username || !password || (!tickets && tickets !== 0)) {
-      throw new MissingParamsError(['firstName', 'lastName', 'username', 'password', 'tickets', 'removeImage']);
+      throw new MissingParamsError([
+        'firstName',
+        'lastName',
+        'username',
+        'password',
+        'tickets',
+        'removeImage',
+      ]);
     }
 
     let users = await service.db.query(
@@ -96,12 +101,11 @@ module.exports = (service) => ({
       id,
     );
 
-
     if (users.length === 0) {
       throw new NotFoundError();
     }
 
-        let imageKey = users[0].image_key;
+    let imageKey = users[0].image_key;
 
     if ((file || removeImage) && !!imageKey) {
       try {
@@ -132,7 +136,7 @@ module.exports = (service) => ({
 
     await service.db.query(
       `UPDATE USERS SET firstname = ?, lastname = ?, username = ?, password = ?, tickets = ?, image_key = ? WHERE id = ?`,
-      [firstName, lastName, username, password, tickets, image_key, id,],
+      [firstName, lastName, username, password, tickets, imageKey, id],
     );
 
     users = await service.db.query(
@@ -192,8 +196,7 @@ module.exports = (service) => ({
   },
   getPrizes: async (p, q, b, user) => {
     const userPrizes = await service.db.query(
-      `
-      SELECT id, category_id, title, description, image_key, committed_tickets, committed_users
+      `SELECT id, category_id, title, description, image_key, committed_tickets, committed_users
       FROM PRIZES P
         INNER JOIN (
           SELECT prize_id, COUNT(0) AS committed_tickets, COUNT(DISTINCT user_id) as committed_users
@@ -201,8 +204,7 @@ module.exports = (service) => ({
           WHERE user_id = ?
           GROUP BY prize_id
         ) T
-        ON P.id = T.prize_id
-      `,
+        ON P.id = T.prize_id`,
       user.id,
     );
     return userPrizes.map((userPrize) => ({
